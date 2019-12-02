@@ -15,10 +15,12 @@ library(corrplot)
 library(mgcv)
 library(cowplot)
 library(gamm4)
-source("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/NCANDA/Scripts/growthrate_gamm4.R")
+library(parallel)
 ###
 localdir<-"/Users/brendenclemmens/Desktop/Projects/R03_behavioral"
-heradir<-"/Volumes/Zeus/Projects/BTC_R03Behavioral"
+heradir<-"/Volumes/Hera/Projects/BTC_R03Behavioral"
+#########
+source("NCANDA/Scripts/growthrate_gamm4.R")
 ######functions#####
 too_small <- function(x) abs(x) < 10^-15
 clip_on_sig <- function(ci){
@@ -72,6 +74,7 @@ multi_gam_growthrate_plotseperate<-function(df,outcomevars,predvars='Ageatvisit'
   mformula<-as.formula("outcome~s(pred,k=4,fx=T)")
   m<-gamm4(outcome~s(pred,k=4,fx=T),data=df,random=~(1|idvect))
   ggr<-gamm4_growthrate(m,agevar="pred",idvar="idvect")
+  ggr_jacknife<-jackknife_gammgrowthrate(modelformula=as.formula("outcome~s(pred,k=4,fx=T)"),df=df,jacknifevar="idvect",idvar="idvect",mc.cores=30)
   plotname<-sprintf("/NCANDA/Figures/%s.%s.pdf",plotspecifier,as.character(pairs$outcome[p]))
   gamm_growthrate_plot(df,m,ggr,agevar='pred',yvar="outcome",idvar=idvar,xplotname="age",yplotname=as.character(pairs$outcome[p]),plotsavename = plotname)
   ggr$var<-as.character(pairs$outcome[p])
@@ -188,6 +191,27 @@ multi_gam_growthrate_multiplot<-function(df,outcomevars,predvars='Ageatvisit',mo
     save_plot(topplotname, topplottilegrid, ncol = 1, base_height=12,base_width =10)
     }
 }
+####Jacknife maturation point#######
+jackknifematurationpoint<-function(df,outcomevars,predvars){
+    pairs<-as.data.frame(expand.grid(outcomevars,predvars))
+    names(pairs)<-c("outcome","pred")
+    idvect<-df[,idvar]
+    df$idvect<-idvect
+    for (p in 1:nrow(pairs)){
+    df$outcome<-unlist(df[,as.character(pairs$outcome[p])])
+    df$pred<-unlist(df[,as.character(pairs$pred[p])])
+    #m<-mgcv::gam(model,data=df)
+    mformula<-as.formula("outcome~s(pred,k=4,fx=T)")
+    m<-gamm4(outcome~s(pred,k=4,fx=T),data=df,random=~(1|idvect))
+    ggr<-gamm4_growthrate(m,agevar="pred",idvar="idvect")
+    ggr_jacknife<-jackknife_gammgrowthrate(modelformula=as.formula("outcome~s(pred,k=4,fx=T)+"),df=df,jacknifevar="idvect",idvar="idvect",mc.cores=30)
+    ggr_jacknife$outcome<-as.character(pairs$outcome[p])
+    ggr_jacknife$pred<-as.character(pairs$pred[p])
+    save(ggr_jacknife,file=sprintf("NCANDA/Data/Jacknifematpoint.%s.%s.Rdata",as.character(pairs$outcome[p]),as.character(pairs$pred[p])))  
+    }
+}
+
+
 ############
 coglongdata<-read.csv("NCANDA/Data/btc_NCANDAscoredmeasures_20191115.outlierremoved.compositeacclat.csv")
 coglongdata$id<-as.factor(coglongdata$subject)
