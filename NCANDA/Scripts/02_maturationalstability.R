@@ -16,6 +16,9 @@ library(mgcv)
 library(cowplot)
 library(gamm4)
 source("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/NCANDA/Scripts/growthrate_gamm4.R")
+###
+localdir<-"/Users/brendenclemmens/Desktop/Projects/R03_behavioral"
+heradir<-"/Volumes/Zeus/Projects/BTC_R03Behavioral"
 ######functions#####
 too_small <- function(x) abs(x) < 10^-15
 clip_on_sig <- function(ci){
@@ -69,7 +72,7 @@ multi_gam_growthrate_plotseperate<-function(df,outcomevars,predvars='Ageatvisit'
   mformula<-as.formula("outcome~s(pred,k=4,fx=T)")
   m<-gamm4(outcome~s(pred,k=4,fx=T),data=df,random=~(1|idvect))
   ggr<-gamm4_growthrate(m,agevar="pred",idvar="idvect")
-  plotname<-sprintf("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/NCANDA/Figures/%s.%s.pdf",plotspecifier,as.character(pairs$outcome[p]))
+  plotname<-sprintf("/NCANDA/Figures/%s.%s.pdf",plotspecifier,as.character(pairs$outcome[p]))
   gamm_growthrate_plot(df,m,ggr,agevar='pred',yvar="outcome",idvar=idvar,xplotname="age",yplotname=as.character(pairs$outcome[p]),plotsavename = plotname)
   ggr$var<-as.character(pairs$outcome[p])
   }
@@ -84,7 +87,7 @@ multi_gam_growthrate_plotseperatevisitcov<-function(df,outcomevars,predvars='Age
     #m<-mgcv::gam(model,data=df)
     m<-gamm4(outcome~s(pred,k=4,fx = T)+visit,data=df,random=~(1|id))
     ggr<-gamm_growthrate(m,agevar="pred",idvar=idvar)
-    plotname<-sprintf("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/NCANDA/Figures/%s.%s.pdf",plotspecifier,as.character(pairs$outcome[p]))
+    plotname<-sprintf("NCANDA/Figures/%s.%s.pdf",plotspecifier,as.character(pairs$outcome[p]))
     residmodel<-gamm4(outcome~visit,data=df,random=~(1|id))
     adjustresids<-resid(residmodel$gam)
     gamm_growthrate_plot(df,m,ggr,agevar='pred',covar="visit",yvar="outcome",idvar=idvar,xplotname="age",yplotname=as.character(pairs$outcome[p]),plotsavename = plotname,adjustresids=adjustresids)
@@ -162,12 +165,12 @@ multi_gam_growthrate_multiplot<-function(df,outcomevars,predvars='Ageatvisit',mo
     }
   }
   legend <- cowplot::get_legend(tile)
-  plotname<-sprintf("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/Figures/%s.pdf",plotspecifier)
+  plotname<-sprintf("R03_behavioral/Figures/%s.pdf",plotspecifier)
   tilegrid<-cowplot::plot_grid(plotlist=allplots,ncol = 1)
   save_plot(plotname, tilegrid, ncol = 1, base_height=8,base_asp = 1.1)
   dev.off()
   grid.newpage()
-  plotname<-sprintf("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/Figures/%s.legend.pdf",plotspecifier)
+  plotname<-sprintf("R03_behavioral/Figures/%s.legend.pdf",plotspecifier)
   pdf(plotname,width=2,height=2)
   grid.draw(legend)
   dev.off()
@@ -181,12 +184,12 @@ multi_gam_growthrate_multiplot<-function(df,outcomevars,predvars='Ageatvisit',mo
     allplotstp<-allplots
     allplotstp2<-c(scatter,allplotstp)
     topplottilegrid<-cowplot::plot_grid(plotlist=allplotstp2,ncol = 1,rel_heights=c(10,rep(1,length(allplots))))
-    topplotname<-sprintf("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/Figures/%s.withtopplot.pdf",plotspecifier)
+    topplotname<-sprintf("R03_behavioral/Figures/%s.withtopplot.pdf",plotspecifier)
     save_plot(topplotname, topplottilegrid, ncol = 1, base_height=12,base_width =10)
     }
 }
 ############
-coglongdata<-read.csv("/Users/brendenclemmens/Desktop/Projects/R03_behavioral/NCANDA/Data/btc_NCANDAscoredmeasures_20191115.outlierremoved.compositeacclat.csv")
+coglongdata<-read.csv("NCANDA/Data/btc_NCANDAscoredmeasures_20191115.outlierremoved.compositeacclat.csv")
 coglongdata$id<-as.factor(coglongdata$subject)
 ####vars############
 ####################
