@@ -29,15 +29,17 @@ clip_on_sig <- function(ci){
   return(ci)
 }
 ###bootstrap and jacknife wrappers#####
-jackknife_gammgrowthrate<-function(modelformula,df,jacknifevar,idvar=NULL,mc.cores=2){
+jackknife_gammgrowthrate<-function(modelformula=as.formula("outcome~s(pred,k=4,fx=T)"),df,jacknifevar,idvar=NULL,mc.cores){
   mclapply(unique(df[,jacknifevar]),mc.cores=mc.cores,function(j){
     str(j)
     jdf<-df[df[,jacknifevar]!=j,]
     jm<-gamm4(modelformula,data=jdf,random=~(1|idvect))
     jf_ci<-gamm4_growthrate_maturationpoint(jm,agevar="pred",idvar="idvect")
+    jf_ci$jf_id<-as.character(j)
     return(jf_ci)
   })
 }
+
 
 
 ####main wrapper functions##########
