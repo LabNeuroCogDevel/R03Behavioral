@@ -192,26 +192,19 @@ multi_gam_growthrate_multiplot<-function(df,outcomevars,predvars='Ageatvisit',mo
     }
 }
 ####Jacknife maturation point#######
-jackknifematurationpoint<-function(df,outcomevars,predvars){
+jackknifematurationpoint<-function(df,outcomevars,predvars,idvar,jacknifevar,mformula,plotspecifier=NULL){
     pairs<-as.data.frame(expand.grid(outcomevars,predvars))
     names(pairs)<-c("outcome","pred")
-    idvect<-df[,idvar]
-    df$idvect<-idvect
+    df$idvect<-df[,idvar]
     for (p in 1:nrow(pairs)){
     df$outcome<-unlist(df[,as.character(pairs$outcome[p])])
     df$pred<-unlist(df[,as.character(pairs$pred[p])])
-    #m<-mgcv::gam(model,data=df)
-    mformula<-as.formula("outcome~s(pred,k=4,fx=T)")
-    m<-gamm4(outcome~s(pred,k=4,fx=T),data=df,random=~(1|idvect))
-    ggr<-gamm4_growthrate(m,agevar="pred",idvar="idvect")
-    ggr_jacknife<-jackknife_gammgrowthrate(modelformula=as.formula("outcome~s(pred,k=4,fx=T)+"),df=df,jacknifevar="idvect",idvar="idvect",mc.cores=30)
+    ggr_jacknife<-jackknife_gammgrowthrate(modelformula=mformula,df=df,jacknifevar="idvect",idvar="idvect",mc.cores=30)
     ggr_jacknife$outcome<-as.character(pairs$outcome[p])
     ggr_jacknife$pred<-as.character(pairs$pred[p])
-    save(ggr_jacknife,file=sprintf("NCANDA/Data/Jacknifematpoint.%s.%s.Rdata",as.character(pairs$outcome[p]),as.character(pairs$pred[p])))  
+    save(ggr_jacknife,file=sprintf("NCANDA/Data/Jacknifematpoint.%s.%s.%s.Rdata",plotspecifier,as.character(pairs$outcome[p]),as.character(pairs$pred[p])))  
     }
 }
-
-
 ############
 coglongdata<-read.csv("NCANDA/Data/btc_NCANDAscoredmeasures_20191115.outlierremoved.compositeacclat.csv")
 coglongdata$id<-as.factor(coglongdata$subject)
@@ -225,6 +218,13 @@ latvars<-c("cnp_cpf_ifac_rtc","cnp_cpw_iwrd_rtc","cnp_spcptnl_scpt_tprt","cnp_sf
 
 factorvars<-c("Latencyfactorscore","Accuracyfactorscores")
 allfactorvars<-c(accvars,latvars)
+coglongdata$visitnum<-as.numeric(coglongdata$visit)
+######Jacknife######################
+# mformula<-as.formula("outcome~s(pred,k=4,fx=T)")
+#jackknifematurationpoint(coglongdata,allfactorvars,predvars='cnp_age',idvar="idvect",jacknifevar="idvect",mformula=mformula)
+mformulavisit<-as.formula("outcome~s(pred,k=4,fx=T)+s(visitnum,k=4,fx=T)")
+jackknifematurationpoint(coglongdata,allfactorvars,predvars='cnp_age',idvar="id",jacknifevar="idvect",mformula=mformulavisit,plotspecifier="visit")
+
 ####################plot seperate########
 coglongdata$continousvisit<-as.numeric(coglongdata$visit)
 model<-outcome ~ s(pred) + s(id, bs = "cr")
